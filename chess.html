@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		body{
+			text-align: center;
+			width: 360px;
+			margin: auto;
+			font-size: 30px;
+		}
+		#chess{
+	
+			border: 2px solid black;
+		}
+		#killed{
+			width:100%;
+			height:50px;
+			background: #fff;
+		}
+		.clue{
+			/*background: red !important;*/
+			width: 32px;
+			height: 32px;
+			border: 4px solid red;
+			/*padding: auto;*/
+		}
+		div{
+			/*color: black;*/
+			width: 40px;
+			height: 40px;
+			float: left;
+		}
+	</style>
+
+
+
+	<script
+			  src="https://code.jquery.com/jquery-3.1.1.min.js"
+			  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+			  crossorigin="anonymous"></script>
+<script type="text/javascript">
+
+
+	var figures = {
+		wPawn: '&#9817;',
+		bPawn: '&#9823;',
+		wKnight: '&#9816;', 	
+		bKnight: '&#9822;', 	
+		wBishop: '&#9815;',
+		bBishop: '&#9821;',
+		wRook: '&#9814;',
+		bRook: '&#9820;',
+		wQueen: '&#9813;',
+		bQueen: '&#9819;',
+		wKing: '&#9812;',
+		bKing: '&#9818;'
+	}
+
+	var Table = function(name){
+		this.name = name;
+	}; 
+
+	Table.prototype.drawTable = function() {
+
+		var t, i, num;
+	var b = document.getElementsByTagName('body')[0];
+
+	var h1 = document.createElement('h1');
+	h1.appendChild(document.createTextNode('Шахматы'));
+	b.appendChild(h1);
+	for (var n = 0; n < 8; n++){
+		var s = document.createElement('div')
+		b.appendChild(s);
+		s.innerHTML = n+1;
+		(n%2 == 0) ? i = 0 : i = 1 ;
+		t = i + 8; 
+		num = 1;
+		for (i; i < t; i++){
+			var d = document.createElement('div');
+			b.appendChild(d);
+			if (n == 0) d.id = num.toString();
+			else d.id = n.toString() + num.toString();
+			(i%2 == 0) ? d.style.background = '#eee' : d.style.background = 'brown';
+			num++;
+		}
+	}
+	var d = document.createElement('div')
+	b.appendChild(d);
+	for (var n = 0; n < 8; n++){
+		var d = document.createElement('div')
+		b.appendChild(d);
+		d.innerHTML = "&#0" + (65 + n);
+		}
+	var killed = document.createElement('div');
+	killed.setAttribute("id", "killed");
+	b.appendChild(killed);	
+	var but = document.createElement('button');
+	but.setAttribute("id", "button");
+
+	but.appendChild(document.createTextNode('отменить выделение'));
+	b.appendChild(but);	
+	$('#button').hide();
+	};
+
+	Table.prototype.setFigure = function(){
+		var div = document.getElementsByTagName('div');
+	for (var i = 0; i < 72; i++){
+		var div = document.getElementsByTagName('div')[i];
+		var div1 = document.getElementsByTagName('div')[i+63];
+		switch (i){
+			case 1:
+			case 8:
+				div.innerHTML = figures.wRook;
+				div1.innerHTML = figures.bRook;
+				break;
+			case 2:
+			case 7: 
+				div.innerHTML = figures.wKnight;
+				div1.innerHTML = figures.bKnight;
+				break;
+			case 3:
+			case 6:
+				div.innerHTML = figures.wBishop;
+				div1.innerHTML = figures.bBishop;
+				break;
+			case 4:
+				div.innerHTML = figures.wQueen;
+				div1.innerHTML = figures.bQueen;
+				break;
+			case 5:
+				div.innerHTML = figures.wKing;
+				div1.innerHTML = figures.bKing;
+				break;	
+			default: 
+				if (i > 9 && i < 18) {
+					div.innerHTML = figures.wPawn;
+					div1 = document.getElementsByTagName('div')[i+45];
+					div1.innerHTML = figures.bPawn;
+					break;
+				}else break;
+		}
+
+	}
+	};
+	//метод clue определяет фигуру по которой щелкнули мышью и вызывает функцию drawClue, которая отвечает
+	// за 'подсвечивание' возможных ходов 
+
+	Table.prototype.clue = function(place){
+		var char = $('#' + place).text()
+		char = '&#' + char.charCodeAt() + ';';
+		for (key in figures){
+		 	 if ( char == figures[key]) drawClue(key, place);
+		 }	
+	}
+
+	//Функции которые проверяют есть ли у пешек в зоне атаки фигура противника 
+
+	var pawnHasAnEnemy9 = function(figure, place){
+
+		if (figure[0] == 'w'){
+			place = parseInt(place) + 9; 
+			var char = $('#' + place).text()
+			char = '&#' + char.charCodeAt() + ';';
+			for (key in figures){
+		 	 	if ( char == figures[key] && key[0] == 'b'){
+		 	 		return true;
+		 	 	}
+		 	}	
+		} else if (figure[0] == 'b'){
+			place = parseInt(place) - 9; 
+			
+			var char = $('#' + place).text()
+			char = '&#' + char.charCodeAt() + ';';
+			// console.log(char);
+			for (key in figures){
+
+		 	 	if ( char == figures[key] && key[0] == 'w'){
+		 	 		
+		 	 		return true;
+		 	 	}
+		 	}	
+		}
+		return false;
+	}
+
+		var pawnHasAnEnemy11 = function(figure, place){
+
+		if (figure[0] == 'w'){
+			place = parseInt(place) + 11; 
+			var char = $('#' + place).text()
+			char = '&#' + char.charCodeAt() + ';';
+			for (key in figures){
+		 	 	if ( char == figures[key] && key[0] == 'b'){
+		 	 		return true;
+		 	 	}
+		 	}	
+		} else if (figure[0] == 'b'){
+			place = parseInt(place) - 11; 
+			// if (place < 10) place = '0' + place;
+			var char = $('#' + place).text()
+			char = '&#' + char.charCodeAt() + ';';
+			// console.log(char);
+			for (key in figures){
+		 	 	if ( char == figures[key] && key[0] == 'w'){
+		 	 		return true;
+		 	 	}
+		 	}	
+		}
+		return false;
+	}
+
+	//функция для проверки  есть ли на допустимой для хода клетки фигура того-же цвета
+
+	var figureHasAFriend = function(figure, place){
+		if (figure[0] == 'b'){
+			var char = $('#' + place).text();
+			if (char != ''){
+			char = '&#' + char.charCodeAt() + ';';
+			
+			for (key in figures){
+				// console.log(figures[key]);
+		 	 	if ( char == figures[key] && key[0] == 'b'){
+		 	 		return true;
+		 	 	};
+		 	}
+		 	}	
+			 
+		
+		} else if (figure[0] == 'w'){
+			var char = $('#' + place).text();
+			if (char != ''){
+			char = '&#' + char.charCodeAt() + ';';
+			
+			for (key in figures){
+				// console.log(figures[key]);
+		 	 	if ( char == figures[key] && key[0] == 'w'){
+		 	 		return true;
+		 	 	};
+		 	}	
+			} else return false;
+	} else return false;
+};
+
+	var figureHasAnEnemy = function(figure, place){
+		if (figure[0] == 'b'){
+			var char = $('#' + place).text();
+			if (char != ''){
+			char = '&#' + char.charCodeAt() + ';';
+			
+			for (key in figures){
+				// console.log(figures[key]);
+		 	 	if ( char == figures[key] && key[0] == 'w'){
+		 	 		return true;
+		 	 	};
+		 	}
+		 	}	
+			 
+		
+		} else if (figure[0] == 'w'){
+			var char = $('#' + place).text();
+			if (char != ''){
+			char = '&#' + char.charCodeAt() + ';';
+			
+			for (key in figures){
+				// console.log(figures[key]);
+		 	 	if ( char == figures[key] && key[0] == 'b'){
+		 	 		return true;
+		 	 	};
+		 	}	
+			} else return false;
+	} else return false;
+};
+
+
+	var drawClue = function(figure, place){
+
+		if (figure == 'wPawn'){
+			if (pawnHasAnEnemy11(figure, place)){
+				var enemyPlace11 = parseInt(place) + 11; 
+				$('#' + enemyPlace11).addClass('clue');
+			};
+			
+			if (pawnHasAnEnemy9(figure, place)){
+				// console.log('pawnHasAnEnemy9');
+				var enemyPlace9 = parseInt(place) + 9; 
+				$('#' + enemyPlace9).addClass('clue');
+			};
+			if (place[0] == '1'){
+
+				place = parseInt(place) + 10; 
+				if ($('#' + place).text() != '') return false;
+				$('#' + place).addClass('clue');
+				place += 10;
+				if ($('#' + place).text() != '') return false;
+				$('#' + place).addClass('clue');
+			}else{
+				// console.log('else');
+				place = parseInt(place) + 10;
+				if ($('#' + place).text() != '') return false;
+				$('#' + place).addClass('clue');
+				// console.log('#' + place);
+			}
+		} else if (figure == 'bPawn'){
+			if (pawnHasAnEnemy11(figure, place)){
+				var enemyPlace11 = parseInt(place) - 11; 
+				
+				$('#' + enemyPlace11).addClass('clue');
+			};
+			
+			if (pawnHasAnEnemy9(figure, place)){
+				// console.log('pawnHasAnEnemy9');
+				var enemyPlace9 = parseInt(place) - 9; 
+				
+				$('#' + enemyPlace9).addClass('clue');
+			};
+			if (place[0] == '6'){
+				place = parseInt(place) - 10; 
+
+				if ($('#' + place).text() != '') return false;
+				$('#' + place).addClass('clue');
+				place -= 10;
+				if ($('#' + place).text() != '') return false;
+				$('#' + place).addClass('clue');
+			} else{
+
+				// console.log('else');
+				place = parseInt(place) - 10;
+				if ($('#' + place).text() != '') return false;
+				$('#' + place).addClass('clue');
+				// console.log('#' + place);
+
+			};
+		}
+		else if (figure == 'bKnight' || figure == 'wKnight'){ 
+
+			var checkPlace = parseInt(place) + 19; 
+			if (!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			checkPlace = parseInt(place) + 21; 
+			if (!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			checkPlace = parseInt(place) - 19; 
+			if (!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			checkPlace = parseInt(place) - 21; 
+			if (!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			checkPlace = parseInt(place) + 8; 
+			if (!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			checkPlace = parseInt(place) + 12; 
+			if (!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			checkPlace = parseInt(place) - 8; 
+			if (!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			checkPlace = parseInt(place) - 12; 
+			if (!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+		} 
+
+		else if (figure == 'bBishop' || figure == 'wBishop'){ 
+			var checkPlace = parseInt(place);
+			for (var i = 1; i < 8; i++ ){
+				// console.log(i*11);
+				checkPlace = checkPlace + 11;
+				if(figureHasAFriend(figure, checkPlace)) break;
+				if( $( "#" + checkPlace ).length == 0) break;
+				$('#'+ checkPlace).addClass('clue');
+				if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+				// console.log((-i)*11);
+				checkPlace = checkPlace - 11;
+				if(figureHasAFriend(figure, checkPlace)) break;
+				if( $( "#" + checkPlace ).length == 0) break;
+				$('#'+ checkPlace).addClass('clue');
+				if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+					// console.log(i*9);
+					checkPlace = checkPlace + 9;
+					if(figureHasAFriend(figure, checkPlace)) break;
+					if( $( "#" + checkPlace ).length == 0) break;
+					$('#'+ checkPlace).addClass('clue');
+					if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+					// console.log((-i)*9);
+					checkPlace = checkPlace - 9;
+					if(figureHasAFriend(figure, checkPlace)) break;
+					if( $( "#" + checkPlace ).length == 0) break;
+					$('#'+ checkPlace).addClass('clue');
+					if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			 
+		} 
+		else if (figure == 'wRook' || figure == 'bRook'){ 
+			var checkPlace = parseInt(place);
+			for (var i = 1; i < 8; i++ ){
+				// console.log(i*11);
+				checkPlace = checkPlace + 10;
+				if(figureHasAFriend(figure, checkPlace)) break;
+				if( $( "#" + checkPlace ).length == 0) break;
+				$('#'+ checkPlace).addClass('clue');
+				if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+				// console.log((-i)*11);
+				checkPlace = checkPlace - 10;
+				if(figureHasAFriend(figure, checkPlace)) break;
+				if( $( "#" + checkPlace ).length == 0) break;
+				$('#'+ checkPlace).addClass('clue');
+				if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+					// console.log(i*9);
+					checkPlace = checkPlace + 1;
+					if(figureHasAFriend(figure, checkPlace)) break;
+					if( $( "#" + checkPlace ).length == 0) break;
+					$('#'+ checkPlace).addClass('clue');
+					if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+					// console.log((-i)*9);
+					checkPlace = checkPlace - 1;
+					if(figureHasAFriend(figure, checkPlace)) break;
+					if( $( "#" + checkPlace ).length == 0) break;
+					$('#'+ checkPlace).addClass('clue');
+					if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			 
+		}
+		else if (figure == 'wQueen' || figure == 'bQueen'){ 
+			var checkPlace = parseInt(place);
+			for (var i = 1; i < 8; i++ ){
+				// console.log(i*11);
+				checkPlace = checkPlace + 10;
+				if(figureHasAFriend(figure, checkPlace)) break;
+				if( $( "#" + checkPlace ).length == 0) break;
+				$('#'+ checkPlace).addClass('clue');
+				if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+				// console.log((-i)*11);
+				checkPlace = checkPlace - 10;
+				if(figureHasAFriend(figure, checkPlace)) break;
+				if( $( "#" + checkPlace ).length == 0) break;
+				$('#'+ checkPlace).addClass('clue');
+				if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+					// console.log(i*9);
+					checkPlace = checkPlace + 1;
+					if(figureHasAFriend(figure, checkPlace)) break;
+					if( $( "#" + checkPlace ).length == 0) break;
+					$('#'+ checkPlace).addClass('clue');
+					if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+					// console.log((-i)*9);
+					checkPlace = checkPlace - 1;
+					if(figureHasAFriend(figure, checkPlace)) break;
+					if( $( "#" + checkPlace ).length == 0) break;
+					$('#'+ checkPlace).addClass('clue');
+					if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			var checkPlace = parseInt(place);
+			for (var i = 1; i < 8; i++ ){
+				// console.log(i*11);
+				checkPlace = checkPlace + 11;
+				if(figureHasAFriend(figure, checkPlace)) break;
+				if( $( "#" + checkPlace ).length == 0) break;
+				$('#'+ checkPlace).addClass('clue');
+				if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+				// console.log((-i)*11);
+				checkPlace = checkPlace - 11;
+				if(figureHasAFriend(figure, checkPlace)) break;
+				if( $( "#" + checkPlace ).length == 0) break;
+				$('#'+ checkPlace).addClass('clue');
+				if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+					// console.log(i*9);
+					checkPlace = checkPlace + 9;
+					if(figureHasAFriend(figure, checkPlace)) break;
+					if( $( "#" + checkPlace ).length == 0) break;
+					$('#'+ checkPlace).addClass('clue');
+					if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			checkPlace = parseInt(place);
+				for (var i = 1; i < 8; i++ ){
+					// console.log((-i)*9);
+					checkPlace = checkPlace - 9;
+					if(figureHasAFriend(figure, checkPlace)) break;
+					if( $( "#" + checkPlace ).length == 0) break;
+					$('#'+ checkPlace).addClass('clue');
+					if(figureHasAnEnemy(figure, checkPlace)) break;
+			};
+			 
+		}
+			else if (figure == 'wKing' || figure == 'bKing'){ 
+			var checkPlace;
+			for (var i = 0; i < 3; i++ ){
+				checkPlace = parseInt(place);
+				checkPlace = checkPlace + 9 + i;
+				if(!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+				checkPlace = parseInt(place);
+				checkPlace = checkPlace - 9 - i;
+				if(!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			}
+			checkPlace = parseInt(place);
+			checkPlace = checkPlace + 1;
+			if(!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			checkPlace = parseInt(place);
+			checkPlace = checkPlace - 1;
+			if(!figureHasAFriend(figure, checkPlace)) $('#'+ checkPlace).addClass('clue');
+			
+		}
+
+		else{
+			console.log('not a figure');
+		}
+	}
+
+	var main = function(){
+
+	var tbl = new Table('chess');
+	
+	
+	var context, f;
+	var turn = 'w';
+//	Для организации движения фигур используются 2 функции.
+
+	//chooseFigure ожидает клика по фигуре и по клику рисует подсказку для хода
+	var chooseFigure = function(){
+		$('.clue').off();
+		$('div').off();
+		console.log('chooseFigure');
+		console.log(turn);
+		var choice = $(this).text();
+		choice = '&#' + choice.charCodeAt() + ';';
+		for (key in figures){
+			if (choice == figures[key]){
+				choice = key;
+			};
+		}
+		if (choice[0] == turn) {
+			// console.log(figures[key]);
+		 	
+		 		tbl.clue(this.id);
+				context = $(this);
+				f = $(this).text()
+				if ($('body').has($('.clue')).length == 0) {
+					$('div').on('click', chooseFigure);					
+					console.log('нет допустимых ходов, выберите другую фигуру')
+					alert('нет допустимых ходов, выберите другую фигуру');
+					return false;
+				};
+	
+				console.log('совершите ход');
+				$('.clue').on('click', waitAMove);
+				$('#button').on('click', cancel);
+				$('#button').show();
+				return false;
+		 	 	}
+		 else {
+		 	$('div').on('click', chooseFigure);
+		 	alert('выберите фигуру своего цвета');
+		};
+		 	 }
+		
+	
+	
+
+	
+	//waitAMove Ожидает клика по подсвеченной клетке и после совершенного хода ожидает выбор новой фигуры
+	var cancel = function(){
+		console.log('cancel');
+		$('#button').off();
+		$('*').removeClass('clue');
+		$('div').on('click', chooseFigure);
+		$('#button').hide();
+	}
+	var waitAMove = function(){
+		console.log('waitAMove');
+		$('.clue').off();
+		$('div').off();
+		
+		if ($(this).html() != '') {
+			var deadFig = $(this).text();
+			$(this).text('');
+			$(this).text(f);
+			context.text('');
+			console.log(deadFig+'deadfig');
+			$('#killed').append(deadFig);
+			$('*').removeClass('clue');
+			deadFig = '';
+			$('div').on('click',chooseFigure);
+			if (turn == 'w') turn = 'b'
+			else turn = 'w';
+			$('#button').hide();
+			return false;
+			
+			
+		}else {
+		
+		$(this).text(f);
+		context.text('');
+		
+		$('*').removeClass('clue');
+		
+		
+		context.html('');
+		// console.log(f);
+		if (turn == 'w') turn = 'b'
+		else turn = 'w';
+		$('#button').hide();
+		$('div').on('click',chooseFigure);
+
+		return false;
+	};
+		
+	}
+
+	tbl.drawTable();
+	tbl.setFigure();
+	$('div').on('click', chooseFigure);
+
+	}
+	
+	$(document).ready(main);
+
+	</script>
+	
+</head>
+<body> 
+
+	
+</body>
+
+</html>
